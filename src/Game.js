@@ -11,7 +11,7 @@ import {
 import { tileDefinitions } from './tile-definitions';
 
 const TILE_SCALE = 1.6;
-const TILE_HEIGHT = 0.55;
+const TILE_HEIGHT = 0.8;
 
 export default class Game {
   constructor(canvas, setLoadingText) {
@@ -25,7 +25,7 @@ export default class Game {
     this.loadTextures();
 
     // Load map
-    this.loadMap('map-2');
+    this.loadMap('map-1');
 
     // Controls
     this.setupControls();
@@ -48,8 +48,7 @@ export default class Game {
     );
 
     const scene = new Scene();
-
-    camera.position.set(20, 10, 20); // Dimetric perspective
+    camera.position.set(20, 15, 20); // Dimetric: Y=10, Isometric: Y=20
     camera.lookAt(scene.position); // Look at the origin, to get the camera's angle right
     const renderer = new WebGLRenderer({
       canvas: this.canvas
@@ -121,19 +120,22 @@ export default class Game {
   }
 
   addTile(x, y, z, tileId) {
-    const tileData = tileDefinitions.find((d) => d.id === tileId.toString());
+    console.log(tileId);
+    const tileData = tileDefinitions.find(
+      (d) => d.id === (tileId - 1).toString()
+    );
     if (!tileData) {
       console.error('tile', tileId, 'not found');
       return;
     }
 
     // console.log('adding tile', tileId, x, y, z);
-    const tile = new Sprite(this.materials[tileId]);
-    tile.scale.set(TILE_SCALE, TILE_SCALE, TILE_SCALE);
+    const tile = new Sprite(this.materials[tileData.id]);
+    tile.scale.set(TILE_SCALE, TILE_SCALE * 1.4, TILE_SCALE); // 1.4 is the ratio
     tile.position.set(x, y, z * TILE_HEIGHT);
     this.world.add(tile);
 
-    // this.tiles.insert({ x, y, z });
+    this.tiles.insert({ x: x, y: y, z: z });
   }
 
   setupControls() {
@@ -143,6 +145,9 @@ export default class Game {
       this.camera.zoom = Math.min(Math.max(this.camera.zoom, 0.2), 4);
       this.camera.updateProjectionMatrix();
     });
+
+    // Move the camera toward the mouse
+    window.addEventListener('mousemove', (e) => {});
   }
 
   animate() {
