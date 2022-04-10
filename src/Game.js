@@ -1,12 +1,17 @@
 import { Box, QuadTree } from 'js-quadtree';
+import { AmbientLight } from 'three';
+import { GridHelper } from 'three';
 import {
   OrthographicCamera,
   Scene,
+  Sprite,
   SpriteMaterial,
   TextureLoader,
   WebGLRenderer
 } from 'three';
 import { tileDefinitions } from './tile-definitions';
+
+const TILE_SCALE = 1.55;
 
 export default class Game {
   constructor(canvas, setLoadingText) {
@@ -51,6 +56,12 @@ export default class Game {
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
+    const gridHelper = new GridHelper(10, 10);
+    scene.add(gridHelper);
+
+    const ambientLight = new AmbientLight(0xffffff);
+    scene.add(ambientLight);
+
     this.camera = camera;
     this.renderer = renderer;
     this.scene = scene;
@@ -64,7 +75,7 @@ export default class Game {
       const material = new SpriteMaterial({ map: texture });
       this.materials[d.id] = material;
     });
-    this.setLoadingText(`textures loaded`);
+    this.setLoadingText(`textures loaded`, 2);
   }
 
   loadMap(mapName) {
@@ -73,7 +84,7 @@ export default class Game {
     }
 
     let url = `${process.env.PUBLIC_URL}/maps/${mapName}.tmj`;
-    this.setLoadingText(`loading map ${url}`);
+    this.setLoadingText(`loading map from ${url}`);
     fetch(url).then((response) => {
       response.json().then((json) => {
         // Parse the map data
@@ -93,14 +104,23 @@ export default class Game {
           }
         });
 
-        this.setLoadingText(`map loaded`);
+        this.setLoadingText(`✔️ map loaded`, 2);
       });
     });
   }
 
   addTile(x, y, elevation, tileId) {
-    const tileData = tileDefinitions.find((d) => d.id === tileId);
-    if (!tileData) return;
+    const tileData = tileDefinitions.find((d) => d.id === tileId.toString());
+    if (!tileData) {
+      console.error('tile', tileId, 'not found');
+      return;
+    }
+
+    console.log('add tile', tileId);
+    const tile = new Sprite(this.materials['139']);
+    tile.scale.set(TILE_SCALE, TILE_SCALE, TILE_SCALE);
+    tile.position.set(0, 0, 0);
+    this.scene.add(tile);
 
     this.tiles.insert({ x, y, elevation });
   }

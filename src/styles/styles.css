@@ -1,7 +1,4 @@
 /* Fonts */
-@font-face {
-  font-family: body;
-  src: url("fonts/Kenney Mini.ttf"); }
 /* General */
 * {
   margin: 0;
@@ -9,7 +6,7 @@
 
 html {
   font-size: 62.5%;
-  font-family: body;
+  font-family: Verdana, sans-serif;
   box-sizing: border-box; }
 
 body {
@@ -31,7 +28,6 @@ canvas {
 
 #game-overlay {
   position: relative;
-  margin: 2rem;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -39,10 +35,10 @@ canvas {
   #game-overlay .loading-text {
     font-size: 1.6rem;
     height: 2rem;
-    border: 2px solid black;
     text-align: center;
     letter-spacing: 1px;
     padding: 2rem;
-    background-color: #00000020; }
+    color: #fff;
+    background-color: #00000080; }
 
 /*# sourceMappingURL=styles.css.map */
