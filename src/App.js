@@ -10,7 +10,7 @@ function App() {
   function showLoadingText(text) {
     console.log(text);
     setLoadingText(text);
-    setLoadingTextTimer(5);
+    setLoadingTextTimer(3);
   }
 
   useEffect(() => {

@@ -43,10 +43,15 @@ canvas {
   margin: 2rem;
   height: 100vh;
 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
   .loading-text {
     font-size: 1.6rem;
     height: 2rem;
     border: 2px solid black;
+    text-align: center;
     letter-spacing: 1px;
     padding: 2rem;
     background-color: #00000020;
