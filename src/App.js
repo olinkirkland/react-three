@@ -1,24 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+import { useRef, useEffect, useState } from 'react';
+import Game from './Game';
 
 function App() {
+  const [loadingText, setLoadingText] = useState();
+  const [loadingTextTimer, setLoadingTextTimer] = useState(0);
+
+  let game = useRef();
+
+  function showLoadingText(text) {
+    console.log(text);
+    setLoadingText(text);
+    setLoadingTextTimer(5);
+  }
+
+  useEffect(() => {
+    console.log('initializing game');
+    if (!game.current) {
+      game.current = new Game(
+        document.querySelector('#game-canvas'),
+        showLoadingText
+      );
+    } else {
+      // Force a reload
+      window.location.reload();
+    }
+
+    // Loading text timer countdown
+    setInterval(() => {
+      setLoadingTextTimer((prev) => prev - 1);
+    }, 1000);
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <canvas id="game-canvas"></canvas>
+      <div id="game-overlay">
+        {loadingTextTimer > 0 && <p className="loading-text">{loadingText}</p>}
+      </div>
+    </>
   );
 }
 

@@ -1,0 +1,44 @@
+/* Fonts */
+@font-face {
+  font-family: body;
+  src: url("fonts/Kenney Mini.ttf"); }
+/* General */
+* {
+  margin: 0;
+  padding: 0; }
+
+html {
+  font-size: 62.5%;
+  font-family: body;
+  box-sizing: border-box; }
+
+body {
+  overflow: hidden; }
+
+p {
+  font-size: 1.4rem; }
+
+h1 {
+  margin: 1rem 0; }
+
+/* Game */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 100px; }
+
+#game-overlay {
+  position: relative;
+  margin: 2rem;
+  height: 100vh; }
+  #game-overlay .loading-text {
+    font-size: 1.6rem;
+    height: 2rem;
+    border: 2px solid black;
+    letter-spacing: 1px;
+    padding: 2rem;
+    background-color: #00000020; }
+
+/*# sourceMappingURL=styles.css.map */
