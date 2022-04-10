@@ -1,7 +1,6 @@
 import { Box, QuadTree } from 'js-quadtree';
-import { AmbientLight } from 'three';
-import { GridHelper } from 'three';
 import {
+  Group,
   OrthographicCamera,
   Scene,
   Sprite,
@@ -11,7 +10,8 @@ import {
 } from 'three';
 import { tileDefinitions } from './tile-definitions';
 
-const TILE_SCALE = 1.55;
+const TILE_SCALE = 1.6;
+const TILE_HEIGHT = 0.55;
 
 export default class Game {
   constructor(canvas, setLoadingText) {
@@ -25,7 +25,10 @@ export default class Game {
     this.loadTextures();
 
     // Load map
-    this.loadMap('map-1');
+    this.loadMap('map-2');
+
+    // Controls
+    this.setupControls();
 
     // Start the game loop
     this.animate();
@@ -56,11 +59,11 @@ export default class Game {
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const gridHelper = new GridHelper(10, 10);
-    scene.add(gridHelper);
+    // const gridHelper = new GridHelper(5, 5);
+    // scene.add(gridHelper);
 
-    const ambientLight = new AmbientLight(0xffffff);
-    scene.add(ambientLight);
+    // const ambientLight = new AmbientLight(0xffffff);
+    // scene.add(ambientLight);
 
     this.camera = camera;
     this.renderer = renderer;
@@ -71,15 +74,16 @@ export default class Game {
     this.setLoadingText(`loading textures (${tileDefinitions.length})`);
     this.materials = {};
     tileDefinitions.forEach((d) => {
-      const texture = new TextureLoader().load(`tiles/${d.src}.png`);
+      const url = `tiles/${d.src}.png`;
+      const texture = new TextureLoader().load(url);
       const material = new SpriteMaterial({ map: texture });
       this.materials[d.id] = material;
     });
-    this.setLoadingText(`textures loaded`, 2);
+    this.setLoadingText(`✔️ textures loaded`, 2);
   }
 
   loadMap(mapName) {
-    if (this.map) {
+    if (this.world) {
       // TODO unload the current map
     }
 
@@ -89,16 +93,23 @@ export default class Game {
       response.json().then((json) => {
         // Parse the map data
         this.mapWidth = json.width;
-        this.mapHeight = json.height;
+
+        this.world = new Group();
+        this.world.position.x -= this.mapWidth / 2;
+        this.world.position.y -= this.mapWidth / 2;
+        this.worldContainer = new Group();
+        this.worldContainer.rotation.x = -Math.PI / 2;
+        this.worldContainer.add(this.world);
+        this.scene.add(this.worldContainer);
 
         this.tiles = new QuadTree(new Box(0, 0, this.mapWidth, this.mapHeight));
-        json.layers.forEach((layer, elevation) => {
+        json.layers.forEach((layer, z) => {
           if (layer.data) {
-            layer.data.forEach((t, i) => {
-              if (t) {
-                const x = i % this.width;
-                const y = Math.floor(i / this.width);
-                this.addTile(x, y, elevation, t);
+            layer.data.forEach((tileId, i) => {
+              if (tileId) {
+                const x = i % this.mapWidth;
+                const y = Math.floor(i / this.mapWidth);
+                this.addTile(x, y, z, tileId);
               }
             });
           }
@@ -109,26 +120,36 @@ export default class Game {
     });
   }
 
-  addTile(x, y, elevation, tileId) {
+  addTile(x, y, z, tileId) {
     const tileData = tileDefinitions.find((d) => d.id === tileId.toString());
     if (!tileData) {
       console.error('tile', tileId, 'not found');
       return;
     }
 
-    console.log('add tile', tileId);
-    const tile = new Sprite(this.materials['139']);
+    // console.log('adding tile', tileId, x, y, z);
+    const tile = new Sprite(this.materials[tileId]);
     tile.scale.set(TILE_SCALE, TILE_SCALE, TILE_SCALE);
-    tile.position.set(0, 0, 0);
-    this.scene.add(tile);
+    tile.position.set(x, y, z * TILE_HEIGHT);
+    this.world.add(tile);
 
-    this.tiles.insert({ x, y, elevation });
+    // this.tiles.insert({ x, y, z });
+  }
+
+  setupControls() {
+    // Zoom camera in and out
+    window.addEventListener('wheel', (e) => {
+      this.camera.zoom -= (e.deltaY / Math.abs(e.deltaY)) * 0.2;
+      this.camera.zoom = Math.min(Math.max(this.camera.zoom, 0.2), 4);
+      this.camera.updateProjectionMatrix();
+    });
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
 
     // Game loop
+    // this.world.rotation.z += 0.01;
 
     this.renderer.render(this.scene, this.camera);
   }
