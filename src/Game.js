@@ -1,11 +1,18 @@
 import { Box, QuadTree } from 'js-quadtree';
 import {
+  AmbientLight,
+  DoubleSide,
   Group,
+  Mesh,
+  MeshStandardMaterial,
   OrthographicCamera,
+  PlaneGeometry,
+  Raycaster,
   Scene,
   Sprite,
   SpriteMaterial,
   TextureLoader,
+  Vector2,
   WebGLRenderer
 } from 'three';
 import { tileDefinitions } from './tile-definitions';
@@ -22,16 +29,19 @@ export default class Game {
     this.setupScene();
 
     // Load textures
-    this.loadTextures();
+    this.loadTextures(() => {
+      // Load map
+      this.loadMap('map-1', () => {
+        // Player
+        this.setupPlayer();
 
-    // Load map
-    this.loadMap('map-1');
+        // Controls
+        this.setupControls();
 
-    // Controls
-    this.setupControls();
-
-    // Start the game loop
-    this.animate();
+        // Start the game loop
+        this.animate();
+      });
+    });
   }
 
   setupScene() {
@@ -61,27 +71,34 @@ export default class Game {
     // const gridHelper = new GridHelper(5, 5);
     // scene.add(gridHelper);
 
-    // const ambientLight = new AmbientLight(0xffffff);
-    // scene.add(ambientLight);
+    const ambientLight = new AmbientLight(0xffffff);
+    scene.add(ambientLight);
 
     this.camera = camera;
     this.renderer = renderer;
     this.scene = scene;
   }
 
-  loadTextures() {
-    this.setLoadingText(`loading textures (${tileDefinitions.length})`);
+  loadTextures(onComplete) {
+    this.setLoadingText(`loading ${tileDefinitions.length} textures`);
     this.materials = {};
+
+    let textureCount = 0;
     tileDefinitions.forEach((d) => {
       const url = `tiles/${d.src}.png`;
-      const texture = new TextureLoader().load(url);
+      const texture = new TextureLoader().load(url, () => {
+        textureCount++;
+        if (textureCount < tileDefinitions.length) return;
+        // Complete
+        this.setLoadingText(`✔️ textures loaded`, 2);
+        onComplete();
+      });
       const material = new SpriteMaterial({ map: texture });
       this.materials[d.id] = material;
     });
-    this.setLoadingText(`✔️ textures loaded`, 2);
   }
 
-  loadMap(mapName) {
+  loadMap(mapName, onComplete) {
     if (this.world) {
       // TODO unload the current map
     }
@@ -93,6 +110,7 @@ export default class Game {
         // Parse the map data
         this.mapWidth = json.width;
 
+        // Create the tile map
         this.world = new Group();
         this.world.position.x -= this.mapWidth / 2;
         this.world.position.y -= this.mapWidth / 2;
@@ -108,19 +126,29 @@ export default class Game {
               if (tileId) {
                 const x = i % this.mapWidth;
                 const y = Math.floor(i / this.mapWidth);
-                this.addTile(x, y, z, tileId);
+                const tile = this.addTile(x, -y + this.mapWidth, z, tileId);
+                // tile.visible = false;
               }
             });
           }
         });
 
+        // Create plane for testing mouse navigation
+        const geometry = new PlaneGeometry(this.mapWidth, this.mapWidth);
+        const material = new MeshStandardMaterial({
+          color: 0xffff00,
+          side: DoubleSide
+        });
+        this.plane = new Mesh(geometry, material);
+        this.worldContainer.add(this.plane);
+
         this.setLoadingText(`✔️ map loaded`, 2);
+        onComplete();
       });
     });
   }
 
   addTile(x, y, z, tileId) {
-    console.log(tileId);
     const tileData = tileDefinitions.find(
       (d) => d.id === (tileId - 1).toString()
     );
@@ -131,11 +159,13 @@ export default class Game {
 
     // console.log('adding tile', tileId, x, y, z);
     const tile = new Sprite(this.materials[tileData.id]);
+    tile.name = 'tile';
     tile.scale.set(TILE_SCALE, TILE_SCALE * 1.4, TILE_SCALE); // 1.4 is the ratio
     tile.position.set(x, y, z * TILE_HEIGHT);
     this.world.add(tile);
 
     this.tiles.insert({ x: x, y: y, z: z });
+    return tile;
   }
 
   setupControls() {
@@ -146,15 +176,35 @@ export default class Game {
       this.camera.updateProjectionMatrix();
     });
 
-    // Move the camera toward the mouse
-    window.addEventListener('mousemove', (e) => {});
+    // Move the player toward the mouse
+    const raycaster = new Raycaster();
+    let mouse = new Vector2();
+    window.addEventListener('mousemove', (e) => {
+      if (!this.player) return;
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, this.camera);
+      const intersects = raycaster.intersectObject(this.plane);
+
+      if (intersects.length === 0) return;
+      const intersect = intersects[0];
+      const x = intersect.point.x + this.mapWidth / 2;
+      const y = -intersect.point.z + this.mapWidth / 2;
+      this.player.position.set(x, y, 0);
+    });
+  }
+
+  setupPlayer() {
+    console.log('player');
+    this.player = new Sprite(this.materials['339']);
+    this.world.add(this.player);
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
+    if (!this.worldContainer) return;
 
     // Game loop
-    // this.world.rotation.z += 0.01;
 
     this.renderer.render(this.scene, this.camera);
   }
