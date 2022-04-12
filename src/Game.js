@@ -14,11 +14,14 @@ import {
   WebGLRenderer
 } from 'three';
 import { tileDefinitions as sprites } from './tile-definitions';
+import { angleFromKeys } from './Util';
 
 const TILE_SCALE = 1.6;
 const TILE_HEIGHT = 0.8;
 
 export default class Game {
+  angle = 0;
+
   constructor(canvas, setLoadingText) {
     this.canvas = canvas;
     this.setLoadingText = setLoadingText;
@@ -53,11 +56,11 @@ export default class Game {
     // this.worldContainer.rotation.z += 0.005;
 
     // Player movement
-    const speed = 0.05;
-    if (this.keys.left) this.player.position.x -= speed;
-    if (this.keys.right) this.player.position.x += speed;
-    if (this.keys.down) this.player.position.y -= speed;
-    if (this.keys.up) this.player.position.y += speed;
+    const speed = Object.values(this.keys).some((k) => k) ? 0.05 : 0;
+    const currentAngle = angleFromKeys(this.keys);
+    if (currentAngle !== null) this.angle = currentAngle;
+    this.player.position.x += Math.cos((this.angle * Math.PI) / 180) * speed;
+    this.player.position.y += Math.sin((this.angle * Math.PI) / 180) * speed;
 
     // Player elevation
     const z =
