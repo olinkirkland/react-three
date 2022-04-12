@@ -225,7 +225,7 @@ export default class Game {
     const tile = new Sprite(this.materials[tileData.id]);
     tile.name = 'tile';
     tile.scale.set(TILE_SCALE, TILE_SCALE * 1.4, TILE_SCALE); // 1.4 is the ratio
-    tile.position.set(x, y, z * TILE_HEIGHT);
+    tile.position.set(x, y, z * TILE_HEIGHT - TILE_HEIGHT / 2);
     this.world.add(tile);
 
     this.tiles.insert({
@@ -315,9 +315,8 @@ export default class Game {
   }
 
   elevationAtPoint(x, y) {
-    // Offset x and y
-    x -= 0.5;
-    y -= 0.5;
+    // Offset
+    x -= 1;
 
     // const allTiles = this.tiles.query(new Box(0, 0, this.size, this.size));
     // allTiles.forEach((tile) => (tile.sprite.visible = false));
@@ -366,7 +365,7 @@ export default class Game {
   setupPlayer() {
     this.playerSprite = new Sprite(this.materials['player']);
     this.playerSprite.scale.set(0.5, 0.5);
-    // this.playerSprite.position.z = 0.25;
+    this.playerSprite.position.z = -0.25;
 
     this.player = new Group();
     this.player.add(this.playerSprite);
