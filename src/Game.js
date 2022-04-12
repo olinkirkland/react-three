@@ -60,9 +60,17 @@ export default class Game {
     if (this.keys.up) this.player.position.y += speed;
 
     // Player elevation
-    this.player.position.z =
+    const z =
       this.elevationAtPoint(this.player.position.x, this.player.position.y) *
       TILE_HEIGHT;
+    if (
+      z > this.player.position.z ||
+      Math.abs(this.player.position.z - z < 0.1)
+    ) {
+      this.player.position.z = z;
+    } else if (z < this.player.position.z) {
+      this.player.position.z -= 0.04;
+    }
     // this.player.position.z += Math.sin(Date.now() * 0.001) * 0.5;
     this.renderer.render(this.scene, this.camera);
   }
